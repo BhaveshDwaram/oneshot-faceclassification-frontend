@@ -102,7 +102,12 @@ export default function AttendancePage() {
                 width: 720,
                 height: 720,
                 maxWidth: '100%',
-                margin: '0 auto'
+                margin: '0 auto',
+                '@media (max-width: 768px)': {
+                  width: '100%',
+                  height: 'auto',
+                  aspectRatio: '1/1',
+                },
               }}
             >
               <Webcam
@@ -110,13 +115,8 @@ export default function AttendancePage() {
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
                 videoConstraints={videoConstraints}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: '8px'
-                }}
+                style={{ width: '100%', borderRadius: '8px' }}
               />
-              
               <Box
                 sx={(theme) => ({
                   position: 'absolute',
@@ -130,22 +130,6 @@ export default function AttendancePage() {
                   boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                 })}
               />
-              
-              <Text
-                align="center"
-                size="lg"
-                sx={{
-                  position: 'absolute',
-                  bottom: '20px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  color: 'white',
-                  textShadow: '0 0 10px rgba(0,0,0,0.5)',
-                  width: '100%'
-                }}
-              >
-                Position your face within the frame
-              </Text>
             </Box>
 
             {capturedImage && (

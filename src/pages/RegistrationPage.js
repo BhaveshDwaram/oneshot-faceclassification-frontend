@@ -19,7 +19,8 @@ import { motion } from 'framer-motion';
 import { FaCheck } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { generateUniqueId } from '../utils/helpers';
-import { registerUser } from '../utils/api';  // Import the API function
+import { registerUser } from '../utils/api';
+import WebcamCapture from '../components/Attendance/WebcamCapture';
 
 export default function RegistrationPage() {
   const [image, setImage] = useState(null);
@@ -42,31 +43,15 @@ export default function RegistrationPage() {
     },
   });
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showNotification({
-          title: 'Error',
-          message: 'Image size should be less than 5MB',
-          color: 'red',
-        });
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleWebcamCapture = (imageSrc) => {
+    setImage(imageSrc);
   };
 
   const handleSubmit = async (values) => {
     if (!image) {
       showNotification({
         title: 'Error',
-        message: 'Please upload a face image',
+        message: 'Please capture a face image',
         color: 'red',
       });
       return;
@@ -74,8 +59,11 @@ export default function RegistrationPage() {
 
     setLoading(true);
     try {
-      // Call the registerUser API function directly
-      await registerUser({ ...values, image });
+      const response = await registerUser({ ...values, image });
+      
+      if (response && response.error) {
+        throw new Error(response.error);
+      }
       
       showNotification({
         title: 'Success',
@@ -85,13 +73,15 @@ export default function RegistrationPage() {
       
       setTimeout(() => navigate('/'), 2000);
     } catch (error) {
+      console.error('Registration error:', error);
       showNotification({
         title: 'Error',
-        message: error.message,
+        message: error.message || 'Registration failed. Please try again.',
         color: 'red',
       });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -162,20 +152,28 @@ export default function RegistrationPage() {
                   <List.Item>Remove glasses and face coverings</List.Item>
                   <List.Item>Maintain neutral expression</List.Item>
                 </List>
-                <Box mt="xl">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    style={{ display: 'none' }}
-                    id="imageUpload"
-                  />
-                  <label htmlFor="imageUpload">
-                    <Button component="span" fullWidth>
-                      Upload Face Image
-                    </Button>
-                  </label>
-                  {image && (
+                <Box 
+                  mt="xl"
+                  sx={{ 
+                    position: 'relative',
+                    width: 720,
+                    height: 720,
+                    maxWidth: '100%',
+                    margin: '0 auto',
+                    '@media (max-width: 768px)': {
+                      width: '100%',
+                      height: 'auto',
+                      aspectRatio: '1/1',
+                    },
+                  }}
+                >
+                  <WebcamCapture onImageCapture={handleWebcamCapture} />
+                </Box>
+                {image && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
                     <Box mt="md">
                       <Image
                         src={image}
@@ -183,10 +181,11 @@ export default function RegistrationPage() {
                         width={200}
                         mx="auto"
                         radius="md"
+                        caption="Preview of captured image"
                       />
                     </Box>
-                  )}
-                </Box>
+                  </motion.div>
+                )}
               </Box>
             </Group>
             <Group position="center" mt="xl">
